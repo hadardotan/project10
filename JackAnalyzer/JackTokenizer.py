@@ -1,6 +1,7 @@
 import os
 from xml.sax.saxutils import escape
-#
+
+
 # handles the compiler's input:
 # allows:
 #     ignoring white space
@@ -17,9 +18,8 @@ class JackTokenizer(object):
         :param input_file
         """
         file = open(input_file,'r')
-        self.token_type = -1
-        self.current_value = 0;
-
+        self.current_token_type = -1
+        self.current_value = 0
 
     def has_more_tokens(self):
         """
@@ -41,8 +41,8 @@ class JackTokenizer(object):
         """
         :return: the type of the current token (KEYWORD, SYMBOL,
         IDENTIFIER,INT_CONST,STRING_CONST)
-
         """
+        return self.token_type
 
     def keyword(self):
         """
