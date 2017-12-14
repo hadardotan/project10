@@ -1,12 +1,10 @@
 import sys, os, os.path, glob
 
 
-#
 
 
 def main():
     """
-
     :return:
     """
 

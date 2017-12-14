@@ -41,7 +41,7 @@ class CompilationEngine(object):
         :return:
         """
 
-    def compile_parameterList(self):
+    def compile_parameter_list(self):
         """
         Compiles a (possibly empty) parameter list,
         not including the enclosing “()”.
