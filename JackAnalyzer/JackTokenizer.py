@@ -150,6 +150,7 @@ class JackTokenizer(object):
         pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)|" \
                   r"(/\**.*?\*/|//[^\r\n]*$)"
         regex = re.compile(pattern, re.MULTILINE | re.DOTALL)
+
         def _replacer(match):
             # if the 2nd group (capturing comments) is not None,
             # it means we have captured a non-quoted (real) comment string.
