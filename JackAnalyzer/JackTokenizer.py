@@ -85,6 +85,8 @@ class JackTokenizer(object):
             self.output_file.write(self.int_val())
         elif type == STRING_CONS:
             self.output_file.write(self.string_val())
+        elif type == NO_TOKEN:
+            self.output_file.write("error! no token recognized")
         self.end_tag(type)
 
     def keyword(self):
