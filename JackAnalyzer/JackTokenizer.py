@@ -38,7 +38,7 @@ class JackTokenizer(object):
         should only be called if hasMoreTokens()
         is true. Initially there is no current token.
 
-        :return:
+        :return: xml line <token_type> token </token_type>
         """
         if self.has_more_tokens():
             self.current_value, self.current_token_type =\
@@ -149,9 +149,8 @@ class JackTokenizer(object):
         /** multi-line */)
         :return:
         """
-        pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)|" \
-                  r"(/\**.*?\*/|//[^\r\n]*$)"
-        regex = re.compile(pattern, re.MULTILINE | re.DOTALL)
+
+        regex = re.compile(comment_pattern, re.MULTILINE | re.DOTALL)
 
         def _replacer(match):
             # if the 2nd group (capturing comments) is not None,
@@ -182,7 +181,7 @@ class JackTokenizer(object):
             type = INT_CONST
         elif self.is_string(phrase):
             type = STRING_CONS
-            val = val[1:-2] # remove ""
+            val = val[1:-2] # remove "" from string
         else:
             type = NO_TOKEN
         return val, type

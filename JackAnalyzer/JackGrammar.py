@@ -58,3 +58,8 @@ str_re = r'"[^"\n]*"'
 #  ( '_' ) not starting with a digit
 id_re = r'[^\d][\w\-]+'
 
+
+# comment patterns regex
+comment_pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)|" \
+          r"(/\**.*?\*/|//[^\r\n]*$)"
+
