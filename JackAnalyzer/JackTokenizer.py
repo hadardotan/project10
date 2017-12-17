@@ -159,10 +159,8 @@ class JackTokenizer(object):
 
         :return:
         """
-
-        remove = TRUE
+        remove = True
         while(remove):
-
             whitespace_re = RE_WHITESPACE_COMPILED.match(self.code)
             comment1_re = RE_COMMENT1_COMPILED.match(self.code)
             comment2_re = RE_COMMENT2_COMPILED.match(self.code)
