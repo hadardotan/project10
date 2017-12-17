@@ -149,11 +149,7 @@ class JackTokenizer(object):
         :return: tokenized_lines
         """
         self.remove_comments()
-        print("----------------")
-        print(self.code)
         tokenized_lines = self.code.split(' ')
-        print(tokenized_lines)
-
         return tokenized_lines
 
     def remove_comments (self):
@@ -172,8 +168,6 @@ class JackTokenizer(object):
                 remove = True
             elif comment1_re:
                 self.update_code_by_match(RE_COMMENT1_COMPILED)
-                print("hiiiiiiiiiiiiiii")
-                print(self.code)
                 remove = True
             elif comment2_re:
                 self.update_code_by_match(RE_COMMENT2_COMPILED)
