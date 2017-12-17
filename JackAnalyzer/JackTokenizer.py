@@ -53,9 +53,11 @@ class JackTokenizer(object):
         """
         if self.has_more_tokens():
             self.current_value, self.current_token_type =\
-                self.tokens_to_process.pop(0)
+                self.phrase_to_token(self.tokens_to_process.pop(0))
+            print(self.current_value,   self.current_token_type)
         else:
             self.current_value, self.current_token_type = NO_TOKEN, NO_PHRASE
+
         self.generate_xml()
 
     def token_type(self):
@@ -63,7 +65,7 @@ class JackTokenizer(object):
         :return: the type of the current token (KEYWORD, SYMBOL,
         IDENTIFIER,INT_CONST,STRING_CONST)
         """
-        return self.token_type
+        return self.current_token_type
 
     def phrase_value(self):
         """
@@ -72,11 +74,12 @@ class JackTokenizer(object):
         """
         return self.current_value
 
-    def start_tag(self, type):
-        self.output_file.write('<'+tokens_types[type]+'>')
+    def start_tag(self, val):
+        self.output_file.write('<'+val+'>')
+        print(self.output_file)
 
-    def end_tag(self, type):
-        self.output_file.write('</'+tokens_types[type]+'>')
+    def end_tag(self, val):
+        self.output_file.write('</'+val+'>')
 
     def generate_xml(self):
         """
@@ -85,7 +88,7 @@ class JackTokenizer(object):
         """
         val = self.phrase_value()
         type = self.token_type()
-        self.start_tag(type)
+        self.start_tag(tokens_types[type])
         if type == KEYWORD:
             self.output_file.write(self.keyword())
         elif type == SYMBOL:
@@ -98,7 +101,7 @@ class JackTokenizer(object):
             self.output_file.write(self.string_val())
         elif type == NO_TOKEN:
             self.output_file.write("error! no token recognized")
-        self.end_tag(type)
+        self.end_tag(tokens_types[type])
 
     def keyword(self):
         """
@@ -148,9 +151,8 @@ class JackTokenizer(object):
         self.remove_comments()
         print("----------------")
         print(self.code)
-        tokenized_lines = []
-        for phrase in self.code:
-            tokenized_lines += self.phrase_to_token(phrase)
+        tokenized_lines = self.code.split(' ')
+        print(tokenized_lines)
 
         return tokenized_lines
 
@@ -160,23 +162,22 @@ class JackTokenizer(object):
         :return:
         """
         remove = True
-        while(remove):
-            whitespace_re = RE_WHITESPACE_COMPILED.match(self.code)
+        while (remove):
+            newline_re = RE_NEWLINE_COMPILED.match(self.code)
             comment1_re = RE_COMMENT1_COMPILED.match(self.code)
             comment2_re = RE_COMMENT2_COMPILED.match(self.code)
             remove = False
-            if whitespace_re:
-                self.update_code_by_match(whitespace_re)
+            if newline_re:
+                self.update_code_by_match(RE_NEWLINE_COMPILED)
                 remove = True
             elif comment1_re:
-                self.update_code_by_match(comment1_re)
+                self.update_code_by_match(RE_COMMENT1_COMPILED)
                 print("hiiiiiiiiiiiiiii")
                 print(self.code)
                 remove = True
             elif comment2_re:
-                self.update_code_by_match(comment2_re)
+                self.update_code_by_match(RE_COMMENT2_COMPILED)
                 remove = True
-
 
 
     def update_code_by_match(self, match):
@@ -184,7 +185,9 @@ class JackTokenizer(object):
         updates the code according to regex match
         :return:
         """
-        self.code = self.code[match.end():]
+        current_code = self.code
+        current_code = re.sub(match,"",current_code)
+        self.code = " ".join(current_code.split())
 
 
 

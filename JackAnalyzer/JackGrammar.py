@@ -58,7 +58,8 @@ tokens_types = ['keyword', 'symbol', 'integerConstant', 'stringConstant',
 RE_INT = r'\d+'
 RE_STR = r'"[^"\n]*"'
 RE_ID = r'[^\d][\w\-]+'
-RE_WHITESPACE = r'\s'
+RE_NEWLINE = r'\\n'
+RE_WHITESPACES = r'\s' #two or more!
 RE_COMMENT1 = r'//.*[\r\n]+'
 RE_COMMENT2 = r'/\*[\s\S]*?\*/'
 RE_COMMENT3 = r'/\**[\s\S]*?\*/'
@@ -66,13 +67,10 @@ RE_COMMENT3 = r'/\**[\s\S]*?\*/'
 RE_INT_COMPILED = re.compile(RE_INT)
 RE_STR_COMPILED = re.compile(RE_STR)
 RE_ID_COMPILED = re.compile(RE_ID)
-RE_WHITESPACE_COMPILED = re.compile(RE_WHITESPACE)
+RE_NEWLINE_COMPILED = re.compile(RE_NEWLINE)
 RE_COMMENT1_COMPILED = re.compile(RE_COMMENT1)
 RE_COMMENT2_COMPILED = re.compile(RE_COMMENT2)
 RE_COMMENT3_COMPILED = re.compile(RE_COMMENT3)
+RE_WHITESPACES_COMPILED = re.compile(RE_WHITESPACES)
 
-
-# comment patterns regex
-comment_pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)|" \
-          r"(/\**.*?\*/|//[^\r\n]*$)"
 

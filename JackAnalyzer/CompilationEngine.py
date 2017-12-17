@@ -162,7 +162,8 @@ class CompilationEngine(object):
             return
 
     def compile_identifier(self):
-        if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
+        if self.tokenizer.token_type() == grammar.IDENTIFIER:
+
             self.output.write(self.tag(grammar.K_IDENTIFIER) + self.tokenizer.identifier() + self.ctag(grammar.K_IDENTIFIER)
                          + NEW_LINE)
         else:
@@ -409,7 +410,7 @@ class CompilationEngine(object):
 
     def checkSymbol (self, symbol):
         """ Check if the symbol is in the current line in the XML file"""
-        if self.tokenizer.symbol == symbol:
+        if self.tokenizer.token_type() == grammar.SYMBOL:
             self.output.write(self.tag(grammar.K_SYMBOL) + symbol + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
         else:
             raise ValueError("No symbol" + symbol + "found")
