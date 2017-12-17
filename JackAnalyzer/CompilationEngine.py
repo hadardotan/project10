@@ -1,4 +1,7 @@
-import os, os.path, JackAnalyzer.JackTokenizer
+import os, os.path, re, sys
+from project10.JackAnalyzer import JackTokenizer as JackAnalyzer
+from project10.JackAnalyzer import JackGrammar as grammar
+
 from xml.sax.saxutils import escape
 
 
@@ -12,6 +15,8 @@ from xml.sax.saxutils import escape
 # is the next syntactic element of the input.
 
 
+NEW_LINE = "\n"
+
 class CompilationEngine(object):
     def __init__(self, input_file):
         """
@@ -20,26 +25,250 @@ class CompilationEngine(object):
         called must be compileClass().
         :param input_file:
         """
-        self.tokenizer = JackAnalyzer.JackTokenizer.JackTokenizer(input_file)
+        self.tokenizer = JackAnalyzer.JackTokenizer(input_file)
+        self.input = open(input_file, 'r')
+        self.type_list = [grammar.K_INT, grammar.K_CHAR, grammar.K_BOOLEAN]
 
-        return
+
+    def tag(self, tagName):
+        """
+        :param tagName: name that will go in the tag
+        :return: opening tag
+        """
+        return '<' + tagName + '>'
+
+    def ctag(self, tagName):
+        """
+        :param tagName: name that will go in the tag
+        :return: closing tag
+        """
+        return '<\\' + tagName + '>'
+
+
+    def get_text(self, line):
+        """ Returns the text that's between an opening and closing tag within a line"""
+        match = re.match(r'\>(\w*)\<', line)        # TODO useless?
+        if match.group(1):
+            return match.group(1)
+        else:
+            return "Illegal line"
+
+
+    def constructor(self, inputFile, outputFile):
+
+        global output
+        output = open(outputFile, 'w')
+        self.tokenizer.advance()
+        self.compile_class()
 
     def compile_class(self):
         """
         Compiles a complete class.
         :return:
         """
+
+        # <class>
+        output.write(self.tag(grammar.K_CLASS) + NEW_LINE)
+        # class
+        if self.tokenizer.token_type() != grammar.KEYWORD:
+            raise ValueError("No class found in the file")
+        else:
+            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value  + self.ctag(grammar.K_KEYWORD)
+                         + NEW_LINE)
+            # add class to list of types
+            self.type_list.append(self.tokenizer.current_value)
+
+
+        # class Name
+        self.tokenizer.advance()
+        self.compile_identifier()
+
+        # {
+        self.tokenizer.advance()
+        self.checkSymbol("{")
+
+        # classVarDec*
+        self.tokenizer.advance()
+        self.compile_class_var_dec()
+
+        #subroutineDec*
+        self.tokenizer.advance()
+        self.compile_subroutine()
+
+        # }
+        self.tokenizer.advance()
+        self.checkSymbol("}")
+
+        # </class>
+        output.write(self.ctag("class"))
+
     def compile_class_var_dec(self):
         """
         Compiles a static declaration or a field
         declaration.
         :return:
         """
+
+        # <classVarDec>
+        output.write(self.tag("classVarDec") + NEW_LINE)
+
+        # Check there is a classVarDec
+        if self.tokenizer.token_type() == grammar.K_KEYWORD:
+            # 'static' or 'field'
+            if (self.tokenizer.current_value == grammar.K_STATIC) or (self.tokenizer.current_value == grammar.K_FIELD):
+                output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                             + NEW_LINE)
+            else:
+                raise ValueError("No 'static' or 'field' found")
+
+
+            # type
+            self.tokenizer.advance()
+            self.compile_type()
+
+            # varName
+            self.tokenizer.advance()
+            self.compile_identifier()
+
+            # (',' varName)*
+            self.tokenizer.advance()
+            more_varName = True
+            self.multiple_varNames(more_varName, False)
+
+            while (more_varName):
+                if self.tokenizer.current_value == ",":
+                    output.write(
+                        self.tag(grammar.K_SYMBOL) + self.tokenizer.current_value + self.ctag(grammar.K_SYMBOL)
+                        + NEW_LINE)
+                    self.tokenizer.advance()
+                    if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
+                        output.write(
+                            self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER)
+                            + NEW_LINE)
+                        self.tokenizer.advance()
+                    else:
+                        raise ValueError("No varName found")
+                else:
+                    more_varName = False
+
+            # ;
+            self.checkSymbol(";")
+
+            # </classVarDec>
+            output.write(self.ctag("classVarDec"))
+
+        else:
+            return
+
+    def compile_identifier(self):
+        if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
+            output.write(self.tag(grammar.K_IDENTIFIER) + self.tokenizer.identifier() + self.ctag(grammar.K_IDENTIFIER)
+                         + NEW_LINE)
+        else:
+            raise ValueError("No type found")
+
+    def multiple_varNames(self, more_vars, type):
+        """ Compiles all the variables (if there are).
+            It is used to represent (',' varName)*
+            :param more_vars True if there are more varriables, false otherwise
+            :param type True if the format is (',' type varName), and False otherwise"""
+        while (more_vars):
+            # ','
+            if self.tokenizer.current_value == ",":
+                output.write(
+                    self.tag(grammar.K_SYMBOL) + self.tokenizer.symbol() + self.ctag(grammar.K_SYMBOL)
+                    + NEW_LINE)
+
+                if type:
+                    # type
+                    self.tokenizer.advance()
+                    self.compile_type()
+
+                # varName
+                self.tokenizer.advance()
+                if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
+                    output.write(
+                        self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER)
+                        + NEW_LINE)
+                    self.tokenizer.advance()
+                else:
+                    raise ValueError("No varName found")
+            else:
+                more_vars = False
+
+
     def compile_subroutine(self):
         """
         Compiles a complete method, function, or constructor.
         :return:
         """
+        # <subroutineDec>
+        output.write(self.tag("subroutineDec") + NEW_LINE)
+
+        # "constructor" or "function" or "method"
+        if ((self.tokenizer == grammar.K_CONSTRUCTOR) or (self.tokenizer == grammar.K_FUNCTION)
+            or (self.tokenizer == grammar.K_METHOD)):
+
+            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                         + NEW_LINE)
+        else:
+            raise ValueError("No keyword found in subroutine")
+
+
+        # "void" or type
+        if (self.tokenizer == grammar.K_VOID) or (self.tokenizer in self.type_list):
+            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                         + NEW_LINE)
+        else:
+            raise ValueError("No keyword found in subroutine")
+        # subroutine name
+        self.tokenizer.advance()
+        self.compile_identifier()
+
+        # (
+        self.tokenizer.advance()
+        self.checkSymbol("(")
+
+
+        # parameterList
+        self.tokenizer.advance()
+        self.compile_parameter_list()
+
+        # )
+        self.tokenizer.advance()
+        self.checkSymbol("(")
+
+        # subroutine body
+        self.tokenizer.advance()
+        self.compile_subroutineBody()
+
+        # </subroutine>
+        output.write(self.ctag("subroutineDec"))
+
+    def compile_subroutineBody(self):
+        """
+        Compiles subroutine's body
+        """
+        # <subroutineBody>
+        output.write(self.tag("subroutineDec") + NEW_LINE)
+
+        # {
+        self.checkSymbol("{")
+
+        # varDecs*
+        self.tokenizer.advance()
+        self.compile_var_dec()
+
+        # statements
+        self.tokenizer.advance()
+        self.compile_statements()
+
+        # }
+        self.tokenizer.advance()
+        self.checkSymbol("}")
+
+        # </subroutineBody>
+        output.write(self.ctag("subroutineDec") + NEW_LINE)
 
     def compile_parameter_list(self):
         """
@@ -48,11 +277,63 @@ class CompilationEngine(object):
 
         :return:
         """
+        # <parameters>
+        output.write(self.tag("parameters") + NEW_LINE)
+
+        # ((type varName) (',' type varName)*)?
+        self.compile_type()
+
+        more_varName = True
+        self.multiple_varNames(more_varName, True)
+
+        # </parameters>
+        output.write(self.ctag("parameters") + NEW_LINE)
+
     def compile_var_dec(self):
         """
         Compiles a var declaration.
         :return:
         """
+        # <varDec>
+        output.write(self.tag("varDec") + NEW_LINE)
+
+        # 'var'
+        self.tokenizer.advance()
+        if self.tokenizer.current_value == grammar.K_VAR:
+            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                         + NEW_LINE)
+        else:
+            raise ValueError("No 'var' found")
+
+        # type
+        self.tokenizer.advance()
+        self.compile_type()
+
+        # varName
+        self.tokenizer.advance()
+        self.compile_identifier()
+
+        # (',' varName)*
+        self.tokenizer.advance()
+        more_varNames = True
+        self.multiple_varNames(more_varNames, False)
+
+        # ';'
+        self.tokenizer.advance()
+        self.checkSymbol(";")
+
+        # </varDec>
+        output.write(self.ctag("varDec") + NEW_LINE)
+
+
+    def compile_type(self):
+        """ Checks if the type of the current line is in the type_list and if that's the case, it
+        writes it in the output"""
+        if self.tokenizer.current_value in self.type_list:
+            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                         + NEW_LINE)
+        else:
+            raise ValueError("No type found")
 
     def compile_statements(self):
         """
@@ -115,3 +396,25 @@ class CompilationEngine(object):
         :return:
         """
 
+    def return_tag(self, input):
+        """
+        :param input: line within an XML file
+        :return: the line's tag
+        """
+        match = re.match(r'\<(\w*)\>', input)
+        if match.group(1):
+            return match.group(1)
+        else:
+            return "Illegal line"
+
+    def checkSymbol (self, symbol):
+        """ Check if the symbol is in the current line in the XML file"""
+        if self.tokenizer.symbol == symbol:
+            output.write(self.tag(grammar.K_SYMBOL) + symbol + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
+        else:
+            raise ValueError("No symbol" + symbol + "found")
+
+if __name__=="__main__":
+    newEngine = CompilationEngine("C:/Users\Ruthi\Documents\nand2tetris\projects\10\Square\MainT.xml")
+    print("hola")
+    print(newEngine.return_tag("<html>asdfg</dnf>"))
