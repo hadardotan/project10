@@ -1,6 +1,6 @@
 import os, os.path, re, sys
-from project10.JackAnalyzer import JackTokenizer as JackAnalyzer
-from project10.JackAnalyzer import JackGrammar as grammar
+from JackAnalyzer import JackTokenizer as JackAnalyzer
+from JackAnalyzer import JackGrammar as grammar
 
 from xml.sax.saxutils import escape
 
@@ -18,16 +18,19 @@ from xml.sax.saxutils import escape
 NEW_LINE = "\n"
 
 class CompilationEngine(object):
-    def __init__(self, input_file):
+    def __init__(self, input_file,output_file):
         """
         Creates a new compilation engine with the
         given input and output. The next routine
         called must be compileClass().
         :param input_file:
         """
-        self.tokenizer = JackAnalyzer.JackTokenizer(input_file)
-        self.input = open(input_file, 'r')
+        self.tokenizer = JackAnalyzer.JackTokenizer(input_file, output_file)
+        self.input = input_file # already open :)
         self.type_list = [grammar.K_INT, grammar.K_CHAR, grammar.K_BOOLEAN]
+        self.output = output_file # already open :)
+        self.tokenizer.advance()
+        self.compile_class()
 
 
     def tag(self, tagName):
@@ -53,13 +56,11 @@ class CompilationEngine(object):
         else:
             return "Illegal line"
 
-
-    def constructor(self, inputFile, outputFile):
-
-        global output
-        output = open(outputFile, 'w')
-        self.tokenizer.advance()
-        self.compile_class()
+    # def constructor(self, inputFile, outputFile):
+    #     global output
+    #     output = open(outputFile, 'w')
+    #     self.tokenizer.advance()
+    #     self.compile_class()
 
     def compile_class(self):
         """
@@ -68,12 +69,12 @@ class CompilationEngine(object):
         """
 
         # <class>
-        output.write(self.tag(grammar.K_CLASS) + NEW_LINE)
+        self.output.write(self.tag(grammar.K_CLASS) + NEW_LINE)
         # class
         if self.tokenizer.token_type() != grammar.KEYWORD:
             raise ValueError("No class found in the file")
         else:
-            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value  + self.ctag(grammar.K_KEYWORD)
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value  + self.ctag(grammar.K_KEYWORD)
                          + NEW_LINE)
             # add class to list of types
             self.type_list.append(self.tokenizer.current_value)
@@ -100,7 +101,7 @@ class CompilationEngine(object):
         self.checkSymbol("}")
 
         # </class>
-        output.write(self.ctag("class"))
+        self.output.write(self.ctag("class"))
 
     def compile_class_var_dec(self):
         """
@@ -110,13 +111,13 @@ class CompilationEngine(object):
         """
 
         # <classVarDec>
-        output.write(self.tag("classVarDec") + NEW_LINE)
+        self.output.write(self.tag("classVarDec") + NEW_LINE)
 
         # Check there is a classVarDec
         if self.tokenizer.token_type() == grammar.K_KEYWORD:
             # 'static' or 'field'
             if (self.tokenizer.current_value == grammar.K_STATIC) or (self.tokenizer.current_value == grammar.K_FIELD):
-                output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                              + NEW_LINE)
             else:
                 raise ValueError("No 'static' or 'field' found")
@@ -137,12 +138,12 @@ class CompilationEngine(object):
 
             while (more_varName):
                 if self.tokenizer.current_value == ",":
-                    output.write(
+                    self.output.write(
                         self.tag(grammar.K_SYMBOL) + self.tokenizer.current_value + self.ctag(grammar.K_SYMBOL)
                         + NEW_LINE)
                     self.tokenizer.advance()
                     if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
-                        output.write(
+                        self.output.write(
                             self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER)
                             + NEW_LINE)
                         self.tokenizer.advance()
@@ -155,14 +156,14 @@ class CompilationEngine(object):
             self.checkSymbol(";")
 
             # </classVarDec>
-            output.write(self.ctag("classVarDec"))
+            self.output.write(self.ctag("classVarDec"))
 
         else:
             return
 
     def compile_identifier(self):
         if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
-            output.write(self.tag(grammar.K_IDENTIFIER) + self.tokenizer.identifier() + self.ctag(grammar.K_IDENTIFIER)
+            self.output.write(self.tag(grammar.K_IDENTIFIER) + self.tokenizer.identifier() + self.ctag(grammar.K_IDENTIFIER)
                          + NEW_LINE)
         else:
             raise ValueError("No type found")
@@ -175,7 +176,7 @@ class CompilationEngine(object):
         while (more_vars):
             # ','
             if self.tokenizer.current_value == ",":
-                output.write(
+                self.output.write(
                     self.tag(grammar.K_SYMBOL) + self.tokenizer.symbol() + self.ctag(grammar.K_SYMBOL)
                     + NEW_LINE)
 
@@ -187,7 +188,7 @@ class CompilationEngine(object):
                 # varName
                 self.tokenizer.advance()
                 if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
-                    output.write(
+                    self.output.write(
                         self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER)
                         + NEW_LINE)
                     self.tokenizer.advance()
@@ -196,20 +197,19 @@ class CompilationEngine(object):
             else:
                 more_vars = False
 
-
     def compile_subroutine(self):
         """
         Compiles a complete method, function, or constructor.
         :return:
         """
         # <subroutineDec>
-        output.write(self.tag("subroutineDec") + NEW_LINE)
+        self.output.write(self.tag("subroutineDec") + NEW_LINE)
 
         # "constructor" or "function" or "method"
         if ((self.tokenizer == grammar.K_CONSTRUCTOR) or (self.tokenizer == grammar.K_FUNCTION)
             or (self.tokenizer == grammar.K_METHOD)):
 
-            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                          + NEW_LINE)
         else:
             raise ValueError("No keyword found in subroutine")
@@ -217,7 +217,7 @@ class CompilationEngine(object):
 
         # "void" or type
         if (self.tokenizer == grammar.K_VOID) or (self.tokenizer in self.type_list):
-            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+            self.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                          + NEW_LINE)
         else:
             raise ValueError("No keyword found in subroutine")
@@ -243,14 +243,14 @@ class CompilationEngine(object):
         self.compile_subroutineBody()
 
         # </subroutine>
-        output.write(self.ctag("subroutineDec"))
+        self.output.write(self.ctag("subroutineDec"))
 
     def compile_subroutineBody(self):
         """
         Compiles subroutine's body
         """
         # <subroutineBody>
-        output.write(self.tag("subroutineDec") + NEW_LINE)
+        self.output.write(self.tag("subroutineDec") + NEW_LINE)
 
         # {
         self.checkSymbol("{")
@@ -268,7 +268,7 @@ class CompilationEngine(object):
         self.checkSymbol("}")
 
         # </subroutineBody>
-        output.write(self.ctag("subroutineDec") + NEW_LINE)
+        self.output.write(self.ctag("subroutineDec") + NEW_LINE)
 
     def compile_parameter_list(self):
         """
@@ -278,7 +278,7 @@ class CompilationEngine(object):
         :return:
         """
         # <parameters>
-        output.write(self.tag("parameters") + NEW_LINE)
+        self.output.write(self.tag("parameters") + NEW_LINE)
 
         # ((type varName) (',' type varName)*)?
         self.compile_type()
@@ -287,7 +287,7 @@ class CompilationEngine(object):
         self.multiple_varNames(more_varName, True)
 
         # </parameters>
-        output.write(self.ctag("parameters") + NEW_LINE)
+        self.output.write(self.ctag("parameters") + NEW_LINE)
 
     def compile_var_dec(self):
         """
@@ -295,12 +295,12 @@ class CompilationEngine(object):
         :return:
         """
         # <varDec>
-        output.write(self.tag("varDec") + NEW_LINE)
+        self.output.write(self.tag("varDec") + NEW_LINE)
 
         # 'var'
         self.tokenizer.advance()
         if self.tokenizer.current_value == grammar.K_VAR:
-            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                          + NEW_LINE)
         else:
             raise ValueError("No 'var' found")
@@ -323,14 +323,14 @@ class CompilationEngine(object):
         self.checkSymbol(";")
 
         # </varDec>
-        output.write(self.ctag("varDec") + NEW_LINE)
+        self.output.write(self.ctag("varDec") + NEW_LINE)
 
 
     def compile_type(self):
         """ Checks if the type of the current line is in the type_list and if that's the case, it
         writes it in the output"""
         if self.tokenizer.current_value in self.type_list:
-            output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                          + NEW_LINE)
         else:
             raise ValueError("No type found")
@@ -410,11 +410,11 @@ class CompilationEngine(object):
     def checkSymbol (self, symbol):
         """ Check if the symbol is in the current line in the XML file"""
         if self.tokenizer.symbol == symbol:
-            output.write(self.tag(grammar.K_SYMBOL) + symbol + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
+            self.output.write(self.tag(grammar.K_SYMBOL) + symbol + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
         else:
             raise ValueError("No symbol" + symbol + "found")
 
-if __name__=="__main__":
-    newEngine = CompilationEngine("C:/Users\Ruthi\Documents\nand2tetris\projects\10\Square\MainT.xml")
-    print("hola")
-    print(newEngine.return_tag("<html>asdfg</dnf>"))
+# if __name__=="__main__":
+#     newEngine = CompilationEngine("C:\nand\nand2tetris\projects\10\Square\MainT.xml")
+#     print("hola")
+#     print(newEngine.return_tag("<html>asdfg</dnf>"))

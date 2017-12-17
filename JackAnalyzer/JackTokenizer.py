@@ -1,6 +1,6 @@
-import os, re
+import os, re, glob
 from xml.sax.saxutils import escape
-from project10.JackAnalyzer.JackGrammar import *
+from JackAnalyzer.JackGrammar import *
 
 
 # handles the compiler's input:
@@ -11,18 +11,29 @@ from project10.JackAnalyzer.JackGrammar import *
 
 class JackTokenizer(object):
 
-    def __init__(self, input_file):
+    def __init__(self, input_file, output_file):
         """
         Opens the input file/stream and gets ready
         to tokenize it.
         :param input_file
         """
-        self.input_file = open(input_file,'r')
-        self.file_lines = input_file.read() # reads entire contents of the file
-        self.tokens_to_process = self.tokenize_file(self.file_lines)
+        self.input_file = input_file #already open!!
+        self.code = self.file_to_str()
+        self.output_file = output_file
+        self.tokens_to_process = self.tokenize_file(self.code)
         self.current_token_type = NO_TOKEN
         self.current_value = NO_PHRASE
-        self.output_file = self.output_file # TODO : Change!!!!
+
+
+    def file_to_str(self):
+        """
+
+        :return:
+        """
+        code = ""
+        for line in self.input_file:
+            code+=line
+        return code
 
     def has_more_tokens(self):
         """
@@ -134,32 +145,50 @@ class JackTokenizer(object):
         :param file:
         :return: tokenized_lines
         """
-        lines = self.remove_comments(file).split(" ")
+        self.remove_comments()
+        print("----------------")
+        print(self.code)
         tokenized_lines = []
-        for phrase in lines:
+        for phrase in self.code:
             tokenized_lines += self.phrase_to_token(phrase)
+
         return tokenized_lines
 
-    def remove_comments(self,file):
+    def remove_comments (self):
         """
-        removes comment from file and replace it with one white space
-        creates 2 groups of regex:
-        first group captures quoted strings (double or single)
-        second group captures comments (//single-line or /* multi-line */ or
-        /** multi-line */)
+
         :return:
         """
 
-        regex = re.compile(comment_pattern, re.MULTILINE | re.DOTALL)
+        remove = TRUE
+        while(remove):
 
-        def _replacer(match):
-            # if the 2nd group (capturing comments) is not None,
-            # it means we have captured a non-quoted (real) comment string.
-            if match.group(2) is not None:
-                return " "  # so we will return space and remove the comment
-            else:  # otherwise, we will return the 1st group
-                return match.group(1)
-        return regex.sub(_replacer, file)
+            whitespace_re = RE_WHITESPACE_COMPILED.match(self.code)
+            comment1_re = RE_COMMENT1_COMPILED.match(self.code)
+            comment2_re = RE_COMMENT2_COMPILED.match(self.code)
+            remove = False
+            if whitespace_re:
+                self.update_code_by_match(whitespace_re)
+                remove = True
+            elif comment1_re:
+                self.update_code_by_match(comment1_re)
+                print("hiiiiiiiiiiiiiii")
+                print(self.code)
+                remove = True
+            elif comment2_re:
+                self.update_code_by_match(comment2_re)
+                remove = True
+
+
+
+    def update_code_by_match(self, match):
+        """
+        updates the code according to regex match
+        :return:
+        """
+        self.code = self.code[match.end():]
+
+
 
     def phrase_to_token(self, phrase):
         """
@@ -206,7 +235,7 @@ class JackTokenizer(object):
         :param phrase:
         :return:
         """
-        return re.match(id_re, phrase)
+        return re.match(RE_ID_COMPILED, phrase)
 
     def is_int(self, phrase):
         """
@@ -214,7 +243,7 @@ class JackTokenizer(object):
         :param phrase:
         :return:
         """
-        return re.match(int_re, phrase)
+        return re.match(RE_INT_COMPILED, phrase)
 
     def is_string(self, phrase):
         """
@@ -222,4 +251,5 @@ class JackTokenizer(object):
         :param phrase:
         :return:
         """
-        return re.match(str_re, phrase)
+        return re.match(RE_STR_COMPILED, phrase)
+

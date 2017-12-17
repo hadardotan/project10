@@ -1,11 +1,9 @@
-from project10.JackAnalyzer import JackAnalyzer
-
-
+import re
 # The Jack language includes five types of terminal elements (tokens):
 # KEYWORD, SYMBOL, IDENTIFIER,INT_CONST,STRING_CONS
 
 
-
+TRUE = 1
 # tokens CONSTANTS
 KEYWORD = 1
 SYMBOL = 2
@@ -55,13 +53,23 @@ symbols = ['{' , '}' , '(' , ')' , '[' , ']' , '. ' , ', ' , '; ' , '+' , '-' ,
 tokens_types = ['keyword', 'symbol', 'integerConstant', 'stringConstant',
                 'identifier']
 
-# regex for int and string
-int_re = r'\d+'
-str_re = r'"[^"\n]*"'
+# REGEX
 
-# identifier regex - A sequence of letters, digits, and underscore
-#  ( '_' ) not starting with a digit
-id_re = r'[^\d][\w\-]+'
+RE_INT = r'\d+'
+RE_STR = r'"[^"\n]*"'
+RE_ID = r'[^\d][\w\-]+'
+RE_WHITESPACE = r'\s'
+RE_COMMENT1 = r'//.*[\r\n]+'
+RE_COMMENT2 = r'/\*[\s\S]*?\*/'
+RE_COMMENT3 = r'/\**[\s\S]*?\*/'
+
+RE_INT_COMPILED = re.compile(RE_INT)
+RE_STR_COMPILED = re.compile(RE_STR)
+RE_ID_COMPILED = re.compile(RE_ID)
+RE_WHITESPACE_COMPILED = re.compile(RE_WHITESPACE)
+RE_COMMENT1_COMPILED = re.compile(RE_COMMENT1)
+RE_COMMENT2_COMPILED = re.compile(RE_COMMENT2)
+RE_COMMENT3_COMPILED = re.compile(RE_COMMENT3)
 
 
 # comment patterns regex
