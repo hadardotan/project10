@@ -1,6 +1,6 @@
 import os, re
 from xml.sax.saxutils import escape
-from JackAnalyzer.JackGrammar import *
+from project10.JackAnalyzer.JackGrammar import *
 
 
 # handles the compiler's input:

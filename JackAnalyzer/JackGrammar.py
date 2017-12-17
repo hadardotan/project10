@@ -1,3 +1,5 @@
+from project10.JackAnalyzer import JackAnalyzer
+
 
 # The Jack language includes five types of terminal elements (tokens):
 # KEYWORD, SYMBOL, IDENTIFIER,INT_CONST,STRING_CONS
@@ -36,6 +38,9 @@ K_FALSE = 'false'
 K_NULL = 'null'
 K_THIS = 'this'
 K_NONE = ''
+K_KEYWORD = 'keyword'
+K_SYMBOL = "symbol"
+K_IDENTIFIER = "identifier"
 
 keywords = [K_CLASS ,K_CONSTRUCTOR ,K_FUNCTION ,K_METHOD ,K_FIELD ,K_STATIC
 ,K_VAR ,K_INT ,K_BOOLEAN ,K_CHAR ,K_VOID ,K_LET ,K_DO ,K_IF ,K_ELSE ,K_WHILE
