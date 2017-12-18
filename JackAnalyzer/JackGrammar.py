@@ -48,15 +48,11 @@ keywords = [K_CLASS ,K_CONSTRUCTOR ,K_FUNCTION ,K_METHOD ,K_FIELD ,K_STATIC
 symbols = ['{' , '}' , '(' , ')' , '[' , ']' , '. ' , ', ' , '; ' , '+' , '-' ,
           '*' , '/' , '&' , ',' , '<' , '>' , '=' , '~']
 
-SYMBOLS1 = [r'{', r'}' , r'(' , r')' , r'[' , r']' , r'. ' , r', ' , r'; ' ,
-              r'+' , r'-' ,r'*' , r'/' , r'&' , r',' , r'<' , r'>' , r'=' ,
-              r'~']
 
-# SYMBOLS_RE = "\\" + '|\\'.join(SYMBOLS1)
 SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\. |\\, |\\; |\\+|\\-|\\' \
              '*|\\/|\\&|\\,|\\<|\\>|\\=|\\~)'
 QUOTATION_MARK = "\""
-SYMBOLS_COMPILED = re.compile(SYMBOLS_RE)
+
 
 # tokens type
 tokens_types = ['keyword', 'symbol', 'integerConstant', 'stringConstant',
