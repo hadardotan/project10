@@ -51,9 +51,18 @@ class JackTokenizer(object):
 
         :return: xml line <token_type> token </token_type>
         """
+
         if self.has_more_tokens():
+            current_token = self.tokens_to_process.pop(0)
+            check = True
+            while check:
+                check = False
+                if current_token =='':
+                    current_token = self.tokens_to_process.pop(0)
+                    check = True
+
             self.current_value, self.current_token_type =\
-                self.phrase_to_token(self.tokens_to_process.pop(0))
+                self.phrase_to_token(current_token)
             print(self.current_value,   self.current_token_type)
         else:
             self.current_value, self.current_token_type = NO_TOKEN, NO_PHRASE
@@ -149,8 +158,47 @@ class JackTokenizer(object):
         :return: tokenized_lines
         """
         self.remove_comments()
-        tokenized_lines = self.code.split(' ')
+        #split symbols
+        tokenized_lines = re.split(SYMBOLS_RE,self.code)
+        i=0
+        while i < len(tokenized_lines):
+            if QUOTATION_MARK in tokenized_lines[i]: #case token is a string
+                tokenized_lines[i] = [tokenized_lines[i].strip()]
+            else:
+                tokenized_lines[i] = tokenized_lines[i].strip()
+                tokenized_lines[i] = tokenized_lines[i].split(' ')
+            i+=1
+        tokenized_lines = [item for sublist in tokenized_lines for
+                           item in sublist]
         return tokenized_lines
+
+    # def split_strings(self):
+    #     """
+    #
+    #     :return:
+    #     """
+    #     num_of_strings, i = 0, 0
+    #     search_string = self.code
+    #     start = True
+    #
+    #     while start == True:
+    #         start = search_string.find("\"")
+    #         print(search_string)
+    #         search_string = search_string[start + 1:]
+    #         end = search_string.find("\"")
+    #         search_string = search_string[end + 1:]
+    #         num_of_strings += 1
+    #         print(search_string)
+    #     #split by quotation marks
+    #     tokenized_lines = self.code.split('"')
+    #     while i < num_of_strings:
+    #         tokenized_lines[i] = tokenized_lines[i].split(' ')
+    #         i += 1
+    #     tokenized_lines[i] = ["\""+tokenized_lines[i]+"\""]
+    #     tokenized_lines[i+1] = tokenized_lines[i+1].split(' ')
+    #     tokenized_lines = [item for sublist in tokenized_lines for
+    #                        item in sublist]
+    #     return tokenized_lines
 
     def remove_comments (self):
         """
@@ -195,6 +243,7 @@ class JackTokenizer(object):
         """
         val = phrase
         type = NO_TOKEN
+
         if self.is_keyword(phrase):
             type = KEYWORD
         elif self.is_identifier(phrase):
