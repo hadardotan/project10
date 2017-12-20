@@ -1,6 +1,6 @@
 import os, os.path, re, sys
-from JackAnalyzer import JackTokenizer as JackAnalyzer
-from JackAnalyzer import JackGrammar as grammar
+from project10.JackAnalyzer import JackTokenizer as JackAnalyzer
+from project10.JackAnalyzer import JackGrammar as grammar
 
 from xml.sax.saxutils import escape
 
@@ -342,23 +342,133 @@ class CompilationEngine(object):
         including the enclosing “{}”.
         :return:
         """
+        more_statements = True
+
+        # (statement)*
+        while(more_statements):
+            if self.tokenizer.current_value == "if":
+                self.compile_if()
+                self.tokenizer.advance()
+
+            elif self.tokenizer.current_value == "let":
+                self.compile_let()
+                self.tokenizer.advance()
+
+            elif self.tokenizer.current_value == "while":
+                self.compile_while()
+                self.tokenizer.advance()
+
+            elif self.tokenizer.current_value == "do":
+                self.compile_do()
+                self.tokenizer.advance()
+
+            elif self.tokenizer.current_value == "return":
+                self.compile_return()
+                self.tokenizer.advance()
+            else:
+                more_statements = False
 
     def compile_do(self):
         """
         Compiles a do statement
         :return:
         """
+        # <doStatement>
+        self.output.write(self.tag("doStatement") + NEW_LINE)
+
+        # do
+        if self.tokenizer.current_value == "do":
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                              + NEW_LINE)
+
+        # subroutineCall
+        self.tokenizer.advance()
+        self.compile_subroutine()
+
+        # ;
+        self.tokenizer.advance()
+        self.checkSymbol(";")
+
+        # </doStatement>
+        self.output.write(self.ctag("doStatement") + NEW_LINE)
 
     def compile_let(self):
         """
         Compiles a let statement.
         """
 
+        # <let>
+        self.output.write(self.tag("letStatement")+ NEW_LINE)
+        # let
+        if self.tokenizer.current_value == "let":
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                              + NEW_LINE)
+            # varName
+            self.tokenizer.advance()
+            self.compile_identifier()
+            # [
+            self.tokenizer.advance()
+            check_expression = False
+            if self.tokenizer.token_type() == grammar.SYMBOL:
+                self.output.write(self.tag(grammar.K_SYMBOL) + "[" + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
+                check_expression = True
+            if check_expression:
+                # expression
+                self.tokenizer.advance()
+                self.compile_expression()
+                # ]
+                self.tokenizer.advance()
+                self.checkSymbol("]")
+            # =
+            self.tokenizer.advance()
+            self.checkSymbol("=")
+            # expression
+            self.tokenizer.advance()
+            self.compile_expression()
+            # ;
+            self.tokenizer.advance()
+            self.checkSymbol(";")
+        # </letStatement>
+        self.output.write(self.ctag("letStatement") + NEW_LINE)
+
     def compile_while(self):
         """
         Compiles a while statement.
         :return:
         """
+        # <whileStatement>
+        self.output.write(self.tag("whileStatement") + NEW_LINE)
+
+        # while
+        if self.tokenizer.current_value == "while":
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                              + NEW_LINE)
+        # (
+        self.tokenizer.advance()
+        self.checkSymbol("(")
+        # expression
+        self.tokenizer.advance()
+        self.compile_expression()
+
+        # )
+        self.tokenizer.advance()
+        self.checkSymbol(")")
+
+        # {
+        self.tokenizer.advance()
+        self.checkSymbol("{")
+
+        # statement
+        self.tokenizer.advance()
+        self.compile_statements()
+
+        # }
+        self.tokenizer.advance()
+        self.checkSymbol("}")
+
+        # </whileStatement>
+        self.output.write(self.ctag("whileStatement") + NEW_LINE)
+
 
     def compile_return(self):
         """
@@ -366,11 +476,83 @@ class CompilationEngine(object):
         :return:
         """
 
+        # <returnStatement>
+        self.output.write(self.tag("returnStatement") + NEW_LINE)
+
+        # return
+        if self.tokenizer.current_value == "return":
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                              + NEW_LINE)
+
+        # expression
+        self.tokenizer.advance()
+        self.compile_expression()
+        # TODO expression?
+
+        # ;
+        self.tokenizer.advance()
+        self.checkSymbol(";")
+
+        # </returnStatement>
+        self.output.write(self.ctag("returnStatement") + NEW_LINE)
+
     def compile_if(self):
         """
         Compiles an if statement, possibly with a trailing else clause.
         :return:
         """
+        # <ifStatement>
+        self.output.write(self.tag("ifStatement") + NEW_LINE)
+
+        # if
+        if self.tokenizer.current_value == "if":
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                              + NEW_LINE)
+
+        # (
+        self.tokenizer.advance()
+        self.checkSymbol("(")
+
+        # expression
+
+        # )
+        self.tokenizer.advance()
+        self.checkSymbol(")")
+
+        # {
+        self.tokenizer.advance()
+        self.checkSymbol("{")
+
+        # statements
+        self.tokenizer.advance()
+        self.compile_statements()
+
+        # }
+        self.tokenizer.advance()
+        self.checkSymbol("}")
+
+        # (else {statement})?
+        else_param = False
+        if self.tokenizer.current_value == "else":
+            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                              + NEW_LINE)
+            else_param = True
+        if (else_param):
+            # {
+            self.tokenizer.advance()
+            self.checkSymbol("{")
+
+            # statement
+            self.tokenizer.advance()
+            self.compile_statements()
+
+            # }
+            self.tokenizer.advance()
+            self.checkSymbol("}")
+
+        # </ifStatement>
+        self.output.write(self.ctag("ifStatement") + NEW_LINE)
+
 
     def compile_expression(self):
         """
@@ -411,7 +593,7 @@ class CompilationEngine(object):
     def checkSymbol (self, symbol):
         """ Check if the symbol is in the current line in the XML file"""
         if self.tokenizer.token_type() == grammar.SYMBOL:
-            self.output.write(self.tag(grammar.K_SYMBOL) + symbol + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
+                self.output.write(self.tag(grammar.K_SYMBOL) + symbol + self.ctag(grammar.K_SYMBOL) + NEW_LINE)
         else:
             raise ValueError("No symbol" + symbol + "found")
 
