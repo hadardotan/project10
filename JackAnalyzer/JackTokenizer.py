@@ -25,6 +25,7 @@ class JackTokenizer(object):
         self.current_value = NO_PHRASE
 
 
+
     def file_to_str(self):
         """
 
@@ -42,6 +43,18 @@ class JackTokenizer(object):
         """
         return self.tokens_to_process != []
 
+    def get_next(self):
+        """
+
+        :return:
+        """
+        next_token = self.tokens_to_process[0]
+        next_value, next_type = self.phrase_to_token(next_token)
+        return next_value, next_type
+
+
+
+
     def advance(self):
         """
         Gets the next token from the input and
@@ -54,20 +67,12 @@ class JackTokenizer(object):
 
         if self.has_more_tokens():
             current_token = self.tokens_to_process.pop(0)
-            check = True
-            while check:
-                check = False
-                if current_token =='':
-                    current_token = self.tokens_to_process.pop(0)
-                    check = True
-
             self.current_value, self.current_token_type =\
                 self.phrase_to_token(current_token)
             print(self.current_value,   self.current_token_type)
         else:
             self.current_value, self.current_token_type = NO_TOKEN, NO_PHRASE
 
-        self.generate_xml()
 
     def token_type(self):
         """
