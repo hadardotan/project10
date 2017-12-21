@@ -49,6 +49,11 @@ symbols = ['{' , '}' , '(' , ')' , '[' , ']' , '. ' , ', ' , '; ' , '+' , '-' ,
           '*' , '/' , '&' , ',' , '<' , '>' , '=' , '~']
 
 
+SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\. |\\, |\\; |\\+|\\-|\\' \
+             '*|\\/|\\&|\\,|\\<|\\>|\\=|\\~|\\.)'
+QUOTATION_MARK = "\""
+
+
 # tokens type
 tokens_types = ['keyword', 'symbol', 'integerConstant', 'stringConstant',
                 'identifier']
