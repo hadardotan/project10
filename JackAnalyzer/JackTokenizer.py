@@ -168,8 +168,13 @@ class JackTokenizer(object):
                 tokenized_lines[i] = tokenized_lines[i].strip()
                 tokenized_lines[i] = tokenized_lines[i].split(' ')
             i+=1
+
         tokenized_lines = [item for sublist in tokenized_lines for
                            item in sublist]
+        tokenized_lines = [string for string in tokenized_lines
+                           if len(string) > 0] #remove empty strings
+
+        print(tokenized_lines)
         return tokenized_lines
 
     # def split_strings(self):
@@ -207,14 +212,14 @@ class JackTokenizer(object):
         """
         remove = True
         while (remove):
-            newline_re = RE_NEWLINE_COMPILED.match(self.code)
+            # newline_re = RE_NEWLINE_COMPILED.match(self.code)
             comment1_re = RE_COMMENT1_COMPILED.match(self.code)
             comment2_re = RE_COMMENT2_COMPILED.match(self.code)
             remove = False
-            if newline_re:
-                self.update_code_by_match(RE_NEWLINE_COMPILED)
-                remove = True
-            elif comment1_re:
+            # if newline_re:
+            #     self.update_code_by_match(RE_NEWLINE_COMPILED)
+            #     remove = True
+            if comment1_re:
                 self.update_code_by_match(RE_COMMENT1_COMPILED)
                 remove = True
             elif comment2_re:
