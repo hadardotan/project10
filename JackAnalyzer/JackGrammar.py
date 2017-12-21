@@ -53,6 +53,11 @@ SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\. |\\, |\\; |\\+|\\-|\\' \
              '*|\\/|\\&|\\,|\\<|\\>|\\=|\\~|\\.)'
 QUOTATION_MARK = "\""
 
+keyword_constant = ["true", "false", "null", "this"]
+
+unaryOp = ["-", '~']
+
+operators = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
 
 # tokens type
 tokens_types = ['keyword', 'symbol', 'integerConstant', 'stringConstant',
