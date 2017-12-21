@@ -38,14 +38,14 @@ class CompilationEngine(object):
         :param tagName: name that will go in the tag
         :return: opening tag
         """
-        return '<' + tagName + '>'
+        return '<' + tagName + '> '
 
     def ctag(self, tagName):
         """
         :param tagName: name that will go in the tag
         :return: closing tag
         """
-        return '<\\' + tagName + '>'
+        return ' </' + tagName + '>'
 
     def get_text(self, line):
         """ Returns the text that's between an opening and closing tag within a line"""
@@ -92,8 +92,7 @@ class CompilationEngine(object):
 
         # subroutineDec*
         while (self.compile_subroutine(False)):
-            self.compile_subroutine()
-            self.tokenizer.advance()
+            continue
 
         # }
         self.checkSymbol("}")
@@ -156,6 +155,7 @@ class CompilationEngine(object):
         self.output.write(self.ctag("classVarDec") + NEW_LINE)
 
     def compile_identifier(self):
+
         if self.tokenizer.token_type() == grammar.IDENTIFIER:
             self.output.write(
                 self.tag(grammar.K_IDENTIFIER) + self.tokenizer.identifier() + self.ctag(grammar.K_IDENTIFIER)
@@ -175,14 +175,9 @@ class CompilationEngine(object):
                     self.tag(grammar.K_SYMBOL) + self.tokenizer.symbol() + self.ctag(grammar.K_SYMBOL)
                     + NEW_LINE)
 
-                if type:
-                    # type
-                    self.tokenizer.advance()
-                    self.compile_type(True)
-
                 # varName
                 self.tokenizer.advance()
-                if self.tokenizer.token_type() == grammar.K_IDENTIFIER:
+                if self.tokenizer.token_type() == grammar.IDENTIFIER:
                     self.output.write(
                         self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER)
                         + NEW_LINE)
@@ -198,15 +193,13 @@ class CompilationEngine(object):
         :return:
         """
 
-        # <subroutineDec>
-        self.output.write(self.tag("subroutineDec") + NEW_LINE)
-
         # "constructor" or "function" or "method"
         self.tokenizer.advance()
         if ((self.tokenizer.current_value == grammar.K_CONSTRUCTOR) or (
             self.tokenizer.current_value == grammar.K_FUNCTION)
             or (self.tokenizer.current_value == grammar.K_METHOD)):
-
+            # <subroutineDec>
+            self.output.write(self.tag("subroutineDec") + NEW_LINE)
             self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                               + NEW_LINE)
         else:
@@ -260,10 +253,16 @@ class CompilationEngine(object):
 
         # varDecs*
         self.tokenizer.advance()
-        self.compile_var_dec(False)
+        more_vars = True
+
+        while(more_vars):
+            self.compile_var_dec(False)
+            self.tokenizer.advance()
+
+            if self.tokenizer.current_value != "var":
+                more_vars = False
 
         # statements
-        self.tokenizer.advance()
         self.compile_statements()
 
         # }
@@ -398,7 +397,7 @@ class CompilationEngine(object):
 
         # subroutineCall
         self.tokenizer.advance()
-        self.compile_subroutine()
+        self.subroutineCall()
 
         # ;
         self.tokenizer.advance()
@@ -421,7 +420,9 @@ class CompilationEngine(object):
             # varName
             self.tokenizer.advance()
             self.compile_identifier()
+
             # [
+            advance_token = False
             self.tokenizer.advance()
             check_expression = False
             if self.checkSymbol("[", False):
@@ -429,19 +430,22 @@ class CompilationEngine(object):
             if check_expression:
                 # expression
                 self.tokenizer.advance()
-                self.compile_expression()
+                self.compile_expression(True, True)
                 # ]
-                self.tokenizer.advance()
                 self.checkSymbol("]")
+                advance_token = True
+
             # =
-            self.tokenizer.advance()
+            if (advance_token):
+                self.tokenizer.advance()
             self.checkSymbol("=")
             # expression
             self.tokenizer.advance()
-            self.compile_expression()
+            self.compile_expression(True, True)
+
             # ;
-            self.tokenizer.advance()
             self.checkSymbol(";")
+
         # </letStatement>
         self.output.write(self.ctag("letStatement") + NEW_LINE)
 
@@ -497,13 +501,12 @@ class CompilationEngine(object):
             self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                               + NEW_LINE)
 
-        # expression
-        # self.tokenizer.advance()
-        self.compile_expression()
-        # TODO expression?
+        # expression?
+        if self.tokenizer.get_next()[1] != grammar.SYMBOL:
+            self.tokenizer.advance()
+            self.compile_expression(False)
 
         # ;
-        self.tokenizer.advance()
         self.checkSymbol(";")
 
         # </returnStatement>
@@ -527,9 +530,11 @@ class CompilationEngine(object):
         self.checkSymbol("(")
 
         # expression
+        self.tokenizer.advance()
+        self.compile_expression(True, True)
 
         # )
-        self.tokenizer.advance()
+
         self.checkSymbol(")")
 
         # {
@@ -541,15 +546,18 @@ class CompilationEngine(object):
         self.compile_statements()
 
         # }
-        self.tokenizer.advance()
+
         self.checkSymbol("}")
 
         # (else {statement})?
         else_param = False
-        if self.tokenizer.current_value == "else":
-            self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
-                              + NEW_LINE)
-            else_param = True
+
+        if self.tokenizer.get_next()[0] == "else":
+            self.tokenizer.advance()
+            if self.tokenizer.current_value == "else":
+                self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
+                                  + NEW_LINE)
+                else_param = True
         if (else_param):
             # {
             self.tokenizer.advance()
@@ -560,28 +568,37 @@ class CompilationEngine(object):
             self.compile_statements()
 
             # }
-            self.tokenizer.advance()
             self.checkSymbol("}")
 
         # </ifStatement>
         self.output.write(self.ctag("ifStatement") + NEW_LINE)
 
-    def compile_expression(self):
+    def compile_expression(self, tags=True, term_tag=False):
         """
         Compiles an expression.
         :return:
         """
-        self.compile_term()
+        if tags:
+            # <expression>
+            self.output.write(self.tag("expression") + NEW_LINE)
 
+        self.compile_term(term_tag)
+
+        expression_counter = 0
         # (op term)*
-        self.tokenizer.advance()
         while self.tokenizer.current_value in grammar.operators:
+            expression_counter += 1
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
             self.compile_term()
-            self.tokenizer.advance()
 
-    def compile_term(self):
+        if tags:
+            # </expression>
+            self.output.write(self.ctag("expression") + NEW_LINE)
+
+        return expression_counter
+
+    def compile_term(self, tags=True):
         """
         Compiles a term. This routine is faced with a slight difficulty when
         trying to decide between some of the alternative parsing rules.
@@ -593,8 +610,10 @@ class CompilationEngine(object):
         over.
         :return:
         """
-        # <term>
-        self.output.write(self.tag("term") + NEW_LINE)
+
+        if tags:
+            # <term>
+            self.output.write(self.tag("term") + NEW_LINE)
 
         # Integer constant, String constant, keyword constant
         type = self.tokenizer.token_type()
@@ -604,7 +623,7 @@ class CompilationEngine(object):
                               self.ctag(grammar.tokens_types[type]) + NEW_LINE)
 
         # ( expression )
-        elif type == grammar.SYMBOL:
+        elif self.tokenizer.current_value == "(":
             self.checkSymbol("(")
             self.compile_expression()
             self.checkSymbol(")")
@@ -619,22 +638,40 @@ class CompilationEngine(object):
 
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
-            self.compile_var_dec()
+            self.compile_identifier()
 
             self.tokenizer.advance()
             if self.checkSymbol("(", False):
                 self.tokenizer.advance()
                 self.compile_expression()
                 self.checkSymbol(")")
-
-        # </term>
-        self.output.write(self.ctag("term") + NEW_LINE)
+        else:
+            return False
+        if tags:
+            # </term>
+            self.output.write(self.ctag("term") + NEW_LINE)
 
     def compile_expression_list(self):
         """
         Compiles a (possibly empty) comma separated list of expressions.
         :return:
         """
+        # <expressionList>
+        self.output.write(self.tag("expressionList") + NEW_LINE)
+
+        # expression?
+        if self.compile_expression(False) > 0:
+            # (',' expression)*
+            self.tokenizer.advance()
+            while self.tokenizer.get_next()[1] == ',':
+                self.checkSymbol(",")
+                # expression
+                self.compile_expression()
+                self.tokenizer.advance()
+
+        # </expressionList>
+        self.output.write(self.tag("/expressionList") + NEW_LINE)
+
 
     def return_tag(self, input):
         """
@@ -656,4 +693,33 @@ class CompilationEngine(object):
         else:
             if raise_error:
                 raise ValueError("No symbol " + symbol + " found")
+
+    def subroutineCall(self):
+
+        # (subroutineName ( expressionList )) OR ((className | varName).subroutineName (expressionList))
+        if self.tokenizer.token_type() == grammar.IDENTIFIER:
+            self.output.write(
+                self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER) + NEW_LINE)
+            self.tokenizer.advance()
+            if self.checkSymbol("(", False):
+                self.compile_expression_list()
+                self.checkSymbol(")")
+            elif self.checkSymbol("."):
+                # subroutineName
+                self.tokenizer.advance()
+                if self.tokenizer.token_type() == grammar.IDENTIFIER:
+                    self.output.write(
+                        self.tag(grammar.K_IDENTIFIER) + self.tokenizer.identifier() + self.ctag(
+                            grammar.K_IDENTIFIER) + NEW_LINE)
+                    # (
+                self.tokenizer.advance()
+                self.checkSymbol("(")
+                # expressionList
+                self.tokenizer.advance()
+                self.compile_expression_list()
+                # )
+                self.checkSymbol(")")
+
+
+
 

@@ -1,6 +1,6 @@
 import os, re, glob
 from xml.sax.saxutils import escape
-from JackAnalyzer.JackGrammar import *
+from project10.JackAnalyzer.JackGrammar import *
 
 
 # handles the compiler's input:
@@ -46,7 +46,7 @@ class JackTokenizer(object):
     def get_next(self):
         """
 
-        :return:
+        :return: value and type of next token
         """
         next_token = self.tokens_to_process[0]
         next_value, next_type = self.phrase_to_token(next_token)

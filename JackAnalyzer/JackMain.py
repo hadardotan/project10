@@ -1,5 +1,5 @@
 import sys, os, os.path, glob, re
-from JackAnalyzer.CompilationEngine import CompilationEngine
+from project10.JackAnalyzer.CompilationEngine import CompilationEngine
 
 
 def analyze(files_to_process):
