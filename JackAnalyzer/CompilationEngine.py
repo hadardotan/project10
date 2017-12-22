@@ -98,7 +98,7 @@ class CompilationEngine(object):
         self.checkSymbol("}")
 
         # </class>
-        self.output.write(self.ctag("class"))
+        self.output.write(self.ctag("class") + NEW_LINE)
 
     def compile_class_var_dec(self):
         """
@@ -283,7 +283,6 @@ class CompilationEngine(object):
 
         # ((type varName) (',' type varName)*)?
         self.compile_type(False)
-
         more_varName = True
         self.multiple_varNames(more_varName, True)
 
@@ -332,6 +331,9 @@ class CompilationEngine(object):
         """ Checks if the type of the current line is in the type_list and if that's the case, it
         writes it in the output
         :param raise_error: if true, raise value if no type is found. Otherwise, return."""
+
+        self.output.write(self.tokenizer.token_type().__str__() + self.tokenizer.current_value)
+
         if (self.tokenizer.current_value in self.type_list):
             self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                               + NEW_LINE)
@@ -432,6 +434,7 @@ class CompilationEngine(object):
                 self.tokenizer.advance()
                 self.compile_expression(True, True)
                 # ]
+                self.tokenizer.advance()
                 self.checkSymbol("]")
                 advance_token = True
 
@@ -439,11 +442,13 @@ class CompilationEngine(object):
             if (advance_token):
                 self.tokenizer.advance()
             self.checkSymbol("=")
+
             # expression
             self.tokenizer.advance()
             self.compile_expression(True, True)
 
             # ;
+            self.tokenizer.advance()
             self.checkSymbol(";")
 
         # </letStatement>
@@ -534,7 +539,7 @@ class CompilationEngine(object):
         self.compile_expression(True, True)
 
         # )
-
+        self.tokenizer.advance()
         self.checkSymbol(")")
 
         # {
@@ -573,24 +578,28 @@ class CompilationEngine(object):
         # </ifStatement>
         self.output.write(self.ctag("ifStatement") + NEW_LINE)
 
-    def compile_expression(self, tags=True, term_tag=False):
+    def compile_expression(self, tags=True, term_tag=False, expression_lst=False):
         """
         Compiles an expression.
         :return:
         """
+
         if tags:
             # <expression>
             self.output.write(self.tag("expression") + NEW_LINE)
 
+        expression_counter = 0
+
+        # term
         self.compile_term(term_tag)
 
-        expression_counter = 0
         # (op term)*
-        while self.tokenizer.current_value in grammar.operators:
-            expression_counter += 1
+        if self.tokenizer.get_next()[0] in grammar.operators:
+            self.tokenizer.advance()
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
-            self.compile_term()
+            self.compile_term(term_tag)
+
 
         if tags:
             # </expression>
@@ -598,7 +607,7 @@ class CompilationEngine(object):
 
         return expression_counter
 
-    def compile_term(self, tags=True):
+    def compile_term(self, tags=True, check=False):
         """
         Compiles a term. This routine is faced with a slight difficulty when
         trying to decide between some of the alternative parsing rules.
@@ -611,7 +620,7 @@ class CompilationEngine(object):
         :return:
         """
 
-        if tags:
+        if tags and (check is False):
             # <term>
             self.output.write(self.tag("term") + NEW_LINE)
 
@@ -619,37 +628,55 @@ class CompilationEngine(object):
         type = self.tokenizer.token_type()
         if (type == grammar.INT_CONST) or (type == grammar.STRING_CONS) or \
                 (type == grammar.KEYWORD and self.tokenizer.keyword() in grammar.keyword_constant):
-            self.output.write(self.tag(grammar.tokens_types[type]) + self.tokenizer.current_value +
-                              self.ctag(grammar.tokens_types[type]) + NEW_LINE)
+            if check:
+                return True
+            self.output.write(self.tag(grammar.tokens_types[type-1]) + self.tokenizer.current_value +
+                              self.ctag(grammar.tokens_types[type-1]) + NEW_LINE)
 
         # ( expression )
         elif self.tokenizer.current_value == "(":
+            if check:
+                return True
             self.checkSymbol("(")
-            self.compile_expression()
+            self.tokenizer.advance()
+            self.compile_expression(True, True)
+            self.tokenizer.advance()
             self.checkSymbol(")")
-
-        # subroutineCall
-        elif type == grammar.KEYWORD:
-            self.compile_subroutine()
 
         # unaryOp term
         elif self.tokenizer.current_value in grammar.unaryOp:
+            if check:
+                return True
             self.checkSymbol(self.tokenizer.current_value)
+            self.tokenizer.advance()
+            self.compile_term()
 
         # varName ([ expression ])?
         elif type == grammar.IDENTIFIER:
-            self.compile_identifier()
-
-            self.tokenizer.advance()
-            if self.checkSymbol("(", False):
+            if check:
+                return True
+            if self.tokenizer.get_next()[0] == "[":
+                self.compile_identifier()
                 self.tokenizer.advance()
-                self.compile_expression()
-                self.checkSymbol(")")
+
+                if self.checkSymbol("[", False):
+                    self.tokenizer.advance()
+                    self.compile_expression()
+                    self.tokenizer.advance()
+                    self.checkSymbol("]")
+            elif (self.tokenizer.get_next()[0] == "(") or (self.tokenizer.get_next()[0] == "."):
+                # subroutineCall
+                self.subroutineCall()
+            else:
+                self.output.write(self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value +
+                                  self.ctag(grammar.K_IDENTIFIER) + NEW_LINE)
+
         else:
             return False
-        if tags:
+        if tags and (check is False):
             # </term>
             self.output.write(self.ctag("term") + NEW_LINE)
+        return True
 
     def compile_expression_list(self):
         """
@@ -660,13 +687,14 @@ class CompilationEngine(object):
         self.output.write(self.tag("expressionList") + NEW_LINE)
 
         # expression?
-        if self.compile_expression(False) > 0:
+
+        if self.compile_expression(False, False, True) > 0:
             # (',' expression)*
             self.tokenizer.advance()
             while self.tokenizer.get_next()[1] == ',':
                 self.checkSymbol(",")
                 # expression
-                self.compile_expression()
+                self.compile_expression(True, False, True)
                 self.tokenizer.advance()
 
         # </expressionList>
@@ -697,6 +725,7 @@ class CompilationEngine(object):
     def subroutineCall(self):
 
         # (subroutineName ( expressionList )) OR ((className | varName).subroutineName (expressionList))
+
         if self.tokenizer.token_type() == grammar.IDENTIFIER:
             self.output.write(
                 self.tag(grammar.K_IDENTIFIER) + self.tokenizer.current_value + self.ctag(grammar.K_IDENTIFIER) + NEW_LINE)
