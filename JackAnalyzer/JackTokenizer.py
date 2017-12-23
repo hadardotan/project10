@@ -153,7 +153,7 @@ class JackTokenizer(object):
         :return:  the string value of the current token, without the double
          quotes
         """
-        return self.current_value
+        return self.current_value + " "
 
     def tokenize_file(self,file):
         """
