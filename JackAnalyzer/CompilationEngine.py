@@ -55,11 +55,6 @@ class CompilationEngine(object):
         else:
             return "Illegal line"
 
-    # def constructor(self, inputFile, outputFile):
-    #     global output
-    #     output = open(outputFile, 'w')
-    #     self.tokenizer.advance()
-    #     self.compile_class()
 
     def compile_class(self):
         """
@@ -88,11 +83,14 @@ class CompilationEngine(object):
 
         # classVarDec*
         self.tokenizer.advance()
-        self.compile_class_var_dec()
+        if (self.tokenizer.current_value == grammar.K_STATIC) or (self.tokenizer.current_value == grammar.K_FIELD):
+            while (self.compile_class_var_dec(False) is not False):
+                self.tokenizer.advance()
 
-        # subroutineDec*
-        while (self.compile_subroutine(False)):
-            continue
+        else:
+            # subroutineDec*
+            while (self.compile_subroutine(False) is not False):
+                self.tokenizer.advance()
 
         # }
         self.checkSymbol("}")
@@ -100,7 +98,7 @@ class CompilationEngine(object):
         # </class>
         self.output.write(self.ctag("class") + NEW_LINE)
 
-    def compile_class_var_dec(self):
+    def compile_class_var_dec(self, raise_error=True):
         """
         Compiles a static declaration or a field
         declaration.
@@ -117,7 +115,10 @@ class CompilationEngine(object):
             self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                               + NEW_LINE)
         else:
-            raise ValueError("No 'static' or 'field' found")
+            if raise_error:
+                raise ValueError("No 'static' or 'field' found")
+            else:
+                return False
 
         # type
         self.tokenizer.advance()
@@ -194,7 +195,6 @@ class CompilationEngine(object):
         """
 
         # "constructor" or "function" or "method"
-        self.tokenizer.advance()
         if ((self.tokenizer.current_value == grammar.K_CONSTRUCTOR) or (
             self.tokenizer.current_value == grammar.K_FUNCTION)
             or (self.tokenizer.current_value == grammar.K_METHOD)):
@@ -332,7 +332,6 @@ class CompilationEngine(object):
         writes it in the output
         :param raise_error: if true, raise value if no type is found. Otherwise, return."""
 
-        self.output.write(self.tokenizer.token_type().__str__() + self.tokenizer.current_value)
 
         if (self.tokenizer.current_value in self.type_list):
             self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
@@ -486,7 +485,6 @@ class CompilationEngine(object):
         self.compile_statements()
 
         # }
-        self.tokenizer.advance()
         self.checkSymbol("}")
 
         # </whileStatement>
@@ -591,14 +589,19 @@ class CompilationEngine(object):
         expression_counter = 0
 
         # term
-        self.compile_term(term_tag)
+        if self.compile_term(False, True) is False:
+            return False
+        else:
+            if expression_lst:
+                return True
+            self.compile_term()
 
         # (op term)*
         if self.tokenizer.get_next()[0] in grammar.operators:
             self.tokenizer.advance()
             self.checkSymbol(self.tokenizer.current_value)
             self.tokenizer.advance()
-            self.compile_term(term_tag)
+            self.compile_term()
 
 
         if tags:
@@ -688,13 +691,14 @@ class CompilationEngine(object):
 
         # expression?
 
-        if self.compile_expression(False, False, True) > 0:
+        if self.compile_expression(False, False, True) is not False:
             # (',' expression)*
+            self.compile_expression(True, True)
             self.tokenizer.advance()
             while self.tokenizer.get_next()[1] == ',':
                 self.checkSymbol(",")
                 # expression
-                self.compile_expression(True, False, True)
+                self.compile_expression(True, False, False)
                 self.tokenizer.advance()
 
         # </expressionList>

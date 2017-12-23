@@ -66,7 +66,7 @@ tokens_types = ['keyword', 'symbol', 'identifier', 'integerConstant', 'stringCon
 
 RE_INT = r'\d+'
 RE_STR = r'"[^"\n]*"'
-RE_ID = r'[\D][\w\-]*'
+RE_ID = r'[a-zA-Z]+[\w]*'
 RE_NEWLINE = r'\\n'
 RE_WHITESPACES = r'\s' #two or more!
 RE_COMMENT1 = r'//.*[\r\n]+'
