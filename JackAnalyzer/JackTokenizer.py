@@ -1,6 +1,6 @@
 import os, re, glob
 from xml.sax.saxutils import escape
-from project10.JackAnalyzer.JackGrammar import *
+from JackAnalyzer.JackGrammar import *
 
 
 # handles the compiler's input:
@@ -153,7 +153,7 @@ class JackTokenizer(object):
         :return:  the string value of the current token, without the double
          quotes
         """
-        return self.current_value + " "
+        return self.current_value
 
     def tokenize_file(self,file):
         """
@@ -163,8 +163,21 @@ class JackTokenizer(object):
         :return: tokenized_lines
         """
         self.remove_comments()
+        # find strings
+
+        tokenized_lines = re.split(STRING_RE, self.code)
+        print(tokenized_lines)
         #split symbols
-        tokenized_lines = re.split(SYMBOLS_RE,self.code)
+        new_tokenized = []
+        for part in tokenized_lines:
+            if not re.match(RE_STRING_COMPILED,part.strip()):
+                print(part)
+                part = re.split(SYMBOLS_RE, part)
+                new_tokenized+= part
+            else:
+                new_tokenized += [part]
+        tokenized_lines = new_tokenized
+
         i=0
         while i < len(tokenized_lines):
             if QUOTATION_MARK in tokenized_lines[i]: #case token is a string
@@ -256,15 +269,15 @@ class JackTokenizer(object):
 
         if self.is_keyword(phrase):
             type = KEYWORD
+        elif self.is_string(phrase):
+            type = STRING_CONS
+            val = val[1:-2] # remove "" from string
         elif self.is_identifier(phrase):
             type = IDENTIFIER
         elif self.is_symbol(phrase):
             type = SYMBOL
         elif self.is_int(phrase):
             type = INT_CONST
-        elif self.is_string(phrase):
-            type = STRING_CONS
-            val = val[1:-2] # remove "" from string
         else:
             type = NO_TOKEN
         return val, type
