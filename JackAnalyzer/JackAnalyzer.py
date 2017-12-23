@@ -49,4 +49,3 @@ if __name__ == "__main__":
     main(sys.argv[1])
 
 
-main("C:\nand\nand2tetris\projects\10\MainFruit")

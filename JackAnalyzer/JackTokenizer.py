@@ -69,7 +69,6 @@ class JackTokenizer(object):
             current_token = self.tokens_to_process.pop(0)
             self.current_value, self.current_token_type =\
                 self.phrase_to_token(current_token)
-            print(self.current_value,   self.current_token_type)
         else:
             self.current_value, self.current_token_type = NO_TOKEN, NO_PHRASE
 
@@ -88,34 +87,7 @@ class JackTokenizer(object):
         """
         return self.current_value
 
-    def start_tag(self, val):
-        self.output_file.write('<'+val+'>')
-        print(self.output_file)
 
-    def end_tag(self, val):
-        self.output_file.write('</'+val+'>')
-
-    def generate_xml(self):
-        """
-
-        :return:
-        """
-        val = self.phrase_value()
-        type = self.token_type()
-        self.start_tag(tokens_types[type])
-        if type == KEYWORD:
-            self.output_file.write(self.keyword())
-        elif type == SYMBOL:
-            self.output_file.write(self.symbol())
-        elif type == IDENTIFIER:
-            self.output_file.write(self.identifier())
-        elif type == INT_CONST:
-            self.output_file.write(self.int_val())
-        elif type == STRING_CONS:
-            self.output_file.write(self.string_val())
-        elif type == NO_TOKEN:
-            self.output_file.write("error! no token recognized")
-        self.end_tag(tokens_types[type])
 
     def keyword(self):
         """
@@ -185,7 +157,6 @@ class JackTokenizer(object):
         new_tokenized = []
         for part in tokenized_lines:
             if not re.match(RE_STRING_COMPILED,part.strip()):
-                print(part)
                 part = re.split(SYMBOLS_RE, part)
                 new_tokenized+= part
             else:
@@ -207,36 +178,8 @@ class JackTokenizer(object):
         tokenized_lines = [string for string in tokenized_lines
                            if len(string) > 0] #remove empty strings
 
-        print(tokenized_lines)
         return tokenized_lines
 
-    # def split_strings(self):
-    #     """
-    #
-    #     :return:
-    #     """
-    #     num_of_strings, i = 0, 0
-    #     search_string = self.code
-    #     start = True
-    #
-    #     while start == True:
-    #         start = search_string.find("\"")
-    #         print(search_string)
-    #         search_string = search_string[start + 1:]
-    #         end = search_string.find("\"")
-    #         search_string = search_string[end + 1:]
-    #         num_of_strings += 1
-    #         print(search_string)
-    #     #split by quotation marks
-    #     tokenized_lines = self.code.split('"')
-    #     while i < num_of_strings:
-    #         tokenized_lines[i] = tokenized_lines[i].split(' ')
-    #         i += 1
-    #     tokenized_lines[i] = ["\""+tokenized_lines[i]+"\""]
-    #     tokenized_lines[i+1] = tokenized_lines[i+1].split(' ')
-    #     tokenized_lines = [item for sublist in tokenized_lines for
-    #                        item in sublist]
-    #     return tokenized_lines
 
     def remove_comments (self):
         """
