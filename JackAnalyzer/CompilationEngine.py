@@ -1,6 +1,6 @@
 import os, os.path, re, sys
-from project10.JackAnalyzer import JackTokenizer as JackAnalyzer
-from project10.JackAnalyzer import JackGrammar as grammar
+from JackAnalyzer import JackTokenizer as JackAnalyzer
+from JackAnalyzer import JackGrammar as grammar
 
 from xml.sax.saxutils import escape
 

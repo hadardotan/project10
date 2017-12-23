@@ -1,5 +1,5 @@
 import sys, os, os.path, glob, re
-from project10.JackAnalyzer.CompilationEngine import CompilationEngine
+from JackAnalyzer.CompilationEngine import CompilationEngine
 
 
 def analyze(files_to_process):
@@ -49,4 +49,4 @@ if __name__ == "__main__":
     main(sys.argv[1])
 
 
-main("C:\nand\nand2tetris\projects\10\Square")
+main("C:\nand\nand2tetris\projects\10\ExpressionLessSquare")
