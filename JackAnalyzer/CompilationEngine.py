@@ -1,6 +1,6 @@
 import os, os.path, re, sys
-from JackAnalyzer import JackTokenizer as JackAnalyzer
-from JackAnalyzer import JackGrammar as grammar
+from project10.JackAnalyzer import JackTokenizer as JackAnalyzer
+from project10.JackAnalyzer import JackGrammar as grammar
 
 from xml.sax.saxutils import escape
 
@@ -87,16 +87,15 @@ class CompilationEngine(object):
             while (self.compile_class_var_dec(False) is not False):
                 self.tokenizer.advance()
 
-
+        # subroutineDec*
         if (self.tokenizer.current_value == grammar.K_CONSTRUCTOR) or \
                 (self.tokenizer.current_value == grammar.K_FUNCTION) or \
                 (self.tokenizer.current_value == grammar.K_METHOD):
-            # subroutineDec*
+
             while (self.compile_subroutine(False) is not False):
                 self.tokenizer.advance()
 
         # }
-
         self.checkSymbol("}")
 
         # </class>
@@ -511,12 +510,15 @@ class CompilationEngine(object):
                               + NEW_LINE)
 
         # expression?
-        if self.tokenizer.get_next()[1] != grammar.SYMBOL:
+        if self.tokenizer.get_next()[0] != ";":
             self.tokenizer.advance()
             self.compile_expression(False)
-
-        # ;
-        self.checkSymbol(";")
+            self.tokenizer.advance()
+            self.checkSymbol(";")
+        else:
+            # ;
+            self.tokenizer.advance()
+            self.checkSymbol(";")
 
         # </returnStatement>
         self.output.write(self.ctag("returnStatement") + NEW_LINE)
