@@ -60,8 +60,7 @@ unaryOp = ["-", '~']
 operators = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
 
 # tokens type
-tokens_types = ['keyword', 'symbol', 'integerConstant', 'stringConstant',
-                'identifier']
+tokens_types = ['keyword', 'symbol', 'identifier', 'integerConstant', 'stringConstant']
 
 # REGEX
 

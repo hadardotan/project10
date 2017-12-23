@@ -279,7 +279,7 @@ class CompilationEngine(object):
     def compile_parameter_list(self):
         """
         Compiles a (possibly empty) parameter list,
-        not including the enclosing “()”.
+        not including the enclosing ().
 
         :return:
         """
@@ -354,7 +354,7 @@ class CompilationEngine(object):
     def compile_statements(self):
         """
         Compiles a sequence of statements, not
-        including the enclosing “{}”.
+        including the enclosing {}.
         :return:
         """
         more_statements = True
@@ -512,7 +512,7 @@ class CompilationEngine(object):
         # expression?
         if self.tokenizer.get_next()[0] != ";":
             self.tokenizer.advance()
-            self.compile_expression(False)
+            self.compile_expression()
             self.tokenizer.advance()
             self.checkSymbol(";")
         else:
@@ -624,7 +624,7 @@ class CompilationEngine(object):
         trying to decide between some of the alternative parsing rules.
         Specifically, if the current token is an identifier, the routine must
         distinguish between a variable, an array entry, and a subroutine call.
-        A single look-ahead token, which may be one of “[“, “(“, or “.”
+        A single look-ahead token, which may be one of [, (, or .
         suffices to distinguish between the three possibilities.
         Any other token is not part of this term and should not be advanced
         over.
