@@ -164,11 +164,24 @@ class JackTokenizer(object):
         """
         self.remove_comments()
         # find strings
+        code = self.code
+        i = 0
+        start = 0
+        end = code.find("\"")
+        tokenized_lines = []
+        while code[start:end] != "":
+            if not i%2:
+                tokenized_lines += [code[start:end]]
+                start=end
+                end = code.find("\"",(start+1))
+            else:
+                tokenized_lines += [code[start:(end+1)]]
+                start = end+1
+                end = code.find("\"", (start + 1))
+            i+=1
 
-        tokenized_lines = re.split(STRING_RE, self.code)
-        print(tokenized_lines)
-        #split symbols
         new_tokenized = []
+
         for part in tokenized_lines:
             if not re.match(RE_STRING_COMPILED,part.strip()):
                 print(part)
@@ -176,6 +189,7 @@ class JackTokenizer(object):
                 new_tokenized+= part
             else:
                 new_tokenized += [part]
+
         tokenized_lines = new_tokenized
 
         i=0
@@ -271,11 +285,11 @@ class JackTokenizer(object):
             type = KEYWORD
         elif self.is_string(phrase):
             type = STRING_CONS
-            val = val[1:-2] # remove "" from string
-        elif self.is_identifier(phrase):
-            type = IDENTIFIER
+            val = val[1:-1] # remove "" from string
         elif self.is_symbol(phrase):
             type = SYMBOL
+        elif self.is_identifier(phrase):
+            type = IDENTIFIER
         elif self.is_int(phrase):
             type = INT_CONST
         else:

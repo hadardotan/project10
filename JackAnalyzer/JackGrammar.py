@@ -48,8 +48,8 @@ keywords = [K_CLASS ,K_CONSTRUCTOR ,K_FUNCTION ,K_METHOD ,K_FIELD ,K_STATIC
 symbols = ['{' , '}' , '(' , ')' , '[' , ']' , '. ' , ', ' , '; ' , '+' , '-' ,
           '*' , '/' , '&' , ',' , '<' , '>' , '=' , '~']
 
-STRING_RE = '(\\"[\w\W]*\\" )' #TODO: check how to finish without space
-SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\. |\\, |\\; |\\+|\\-|\\' \
+STRING_RE = r'(\\"[\w\W]*\\" )'
+SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\, |\\; |\\+|\\-|\\' \
              '*|\\/|\\&|\\,|\\<|\\>|\\=|\\~|\\.)'
 QUOTATION_MARK = "\""
 
