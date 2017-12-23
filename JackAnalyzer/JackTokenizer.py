@@ -179,9 +179,10 @@ class JackTokenizer(object):
                 start = end+1
                 end = code.find("\"", (start + 1))
             i+=1
+        # add last line!
+        tokenized_lines += [code[(start):]]
 
         new_tokenized = []
-
         for part in tokenized_lines:
             if not re.match(RE_STRING_COMPILED,part.strip()):
                 print(part)
