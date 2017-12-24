@@ -62,7 +62,7 @@ class JackTokenizer(object):
         should only be called if hasMoreTokens()
         is true. Initially there is no current token.
 
-        :return: xml line <token_type> token </token_type>
+        :return:
         """
 
         if self.has_more_tokens():
@@ -127,6 +127,67 @@ class JackTokenizer(object):
         """
         return self.current_value
 
+    def find_strings(self):
+        """
+
+        :return:
+        """
+        # find strings
+        code = self.code
+        i = 0
+        start = 0
+        end = code.find("\"")
+        tokenized_lines = []
+        while code[start:end] != "":
+            if not i % 2:
+                tokenized_lines += [code[start:end]]
+                start = end
+                end = code.find("\"", (start + 1))
+            else:
+                tokenized_lines += [code[start:(end + 1)]]
+                start = end + 1
+                end = code.find("\"", (start + 1))
+            i += 1
+        # add last line!
+        tokenized_lines += [code[(start):]]
+
+        return tokenized_lines
+
+    def handle_symbols(self,tokenized_lines):
+        """
+
+        :param tokenized_lines:
+        :return:
+        """
+        new_tokenized = []
+        for part in tokenized_lines:
+            if not re.match(RE_STRING_COMPILED, part.strip()):
+                part = part.replace("\n", "")
+                part = part.replace("\t", "")
+                part = re.split(SYMBOLS_RE, part)
+                new_tokenized += part
+            else:
+                new_tokenized += [part]
+
+        tokenized_lines = new_tokenized
+        return tokenized_lines
+
+    def split_tokens(self,tokenized_lines):
+        """
+        split tokens
+        :param tokenized_lines:
+        :return:
+        """
+        i = 0
+        while i < len(tokenized_lines):
+            if QUOTATION_MARK in tokenized_lines[i]:  # case token is a string
+                tokenized_lines[i] = [tokenized_lines[i].strip()]
+            else:
+                tokenized_lines[i] = tokenized_lines[i].strip()
+                tokenized_lines[i] = tokenized_lines[i].split(' ')
+            i += 1
+        return tokenized_lines
+
     def tokenize_file(self,file):
         """
         group the characters of a line into tokens as defined by Jack language
@@ -135,47 +196,9 @@ class JackTokenizer(object):
         :return: tokenized_lines
         """
         self.remove_comments()
-        # find strings
-        code = self.code
-        i = 0
-        start = 0
-        end = code.find("\"")
-        tokenized_lines = []
-        while code[start:end] != "":
-            if not i%2:
-                tokenized_lines += [code[start:end]]
-                start=end
-                end = code.find("\"",(start+1))
-            else:
-                tokenized_lines += [code[start:(end+1)]]
-                start = end+1
-                end = code.find("\"", (start + 1))
-            i+=1
-        # add last line!
-        tokenized_lines += [code[(start):]]
-
-        new_tokenized = []
-        for part in tokenized_lines:
-            if not re.match(RE_STRING_COMPILED,part.strip()):
-
-                part = part.replace("\n","")
-                part = part.replace("\t","")
-                part = re.split(SYMBOLS_RE, part)
-                new_tokenized+= part
-            else:
-                new_tokenized += [part]
-
-        tokenized_lines = new_tokenized
-
-        i=0
-        while i < len(tokenized_lines):
-            if QUOTATION_MARK in tokenized_lines[i]: #case token is a string
-                tokenized_lines[i] = [tokenized_lines[i].strip()]
-            else:
-                tokenized_lines[i] = tokenized_lines[i].strip()
-                tokenized_lines[i] = tokenized_lines[i].split(' ')
-            i+=1
-
+        tokenized_lines = self.find_strings()
+        tokenized_lines = self.handle_symbols(tokenized_lines)
+        tokenized_lines = self.split_tokens(tokenized_lines)
         tokenized_lines = [item for sublist in tokenized_lines for
                            item in sublist]
         tokenized_lines = [string for string in tokenized_lines
