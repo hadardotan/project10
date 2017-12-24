@@ -1,6 +1,6 @@
 import os, os.path, re, sys
-from JackAnalyzer import JackTokenizer as JackAnalyzer
-from JackAnalyzer import JackGrammar as grammar
+import JackAnalyzer.JackTokenizer as JackAnalyzer
+import JackAnalyzer.JackGrammar as grammar
 
 from xml.sax.saxutils import escape
 
@@ -83,6 +83,7 @@ class CompilationEngine(object):
 
         # classVarDec*
         self.tokenizer.advance()
+
         if (self.tokenizer.current_value == grammar.K_STATIC) or (self.tokenizer.current_value == grammar.K_FIELD):
             while (self.compile_class_var_dec(False) is not False):
                 self.tokenizer.advance()
@@ -232,10 +233,11 @@ class CompilationEngine(object):
         self.checkSymbol("(")
 
         # parameterList
-        self.compile_parameter_list()
+        self.tokenizer.advance()
+        if self.compile_parameter_list() is not False:
+            self.tokenizer.advance()
 
         # )
-        self.tokenizer.advance()
         self.checkSymbol(")")
 
         # subroutine body
@@ -261,7 +263,8 @@ class CompilationEngine(object):
         more_vars = True
 
         while(more_vars):
-            self.compile_var_dec(False)
+            if self.compile_var_dec(False) is False:
+                break
             self.tokenizer.advance()
 
             if self.tokenizer.current_value != "var":
@@ -287,7 +290,14 @@ class CompilationEngine(object):
         self.output.write(self.tag("parameterList") + NEW_LINE)
 
         # ((type varName) (',' type varName)*)?
-        self.compile_type(False)
+        if self.compile_type(False) is False:
+            # </parameters>
+            self.output.write(self.ctag("parameterList") + NEW_LINE)
+            return False
+        # varName
+        self.tokenizer.advance()
+        self.compile_identifier()
+
         more_varName = True
         self.multiple_varNames(more_varName, True)
 
@@ -300,18 +310,19 @@ class CompilationEngine(object):
         :param raise_error: raises error if True, returns otherwise
         :return:
         """
-        # <varDec>
-        self.output.write(self.tag("varDec") + NEW_LINE)
+
 
         # 'var'
         if self.tokenizer.current_value == grammar.K_VAR:
+            # <varDec>
+            self.output.write(self.tag("varDec") + NEW_LINE)
             self.output.write(self.tag(grammar.K_KEYWORD) + self.tokenizer.current_value + self.ctag(grammar.K_KEYWORD)
                               + NEW_LINE)
         else:
             if raise_error:
                 raise ValueError("No 'var' found")
             else:
-                return
+                return False
 
         # type
         self.tokenizer.advance()
@@ -349,7 +360,7 @@ class CompilationEngine(object):
             if raise_error:
                 raise ValueError("No type found")
             else:
-                return
+                return False
 
     def compile_statements(self):
         """
