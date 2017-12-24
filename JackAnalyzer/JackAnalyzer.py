@@ -36,7 +36,6 @@ def main(path):
         files_to_process = [path]
 
     elif os.path.isdir(path):
-        print("hi")
         files_to_process = [os.path.join(path, f) for f in os.listdir(path) if
                             f.endswith(".jack")]
 
@@ -48,4 +47,6 @@ def main(path):
 if __name__ == "__main__":
     main(sys.argv[1])
 
+
+main("C:\nand\nand2tetris\projects\10\test3\2")
 

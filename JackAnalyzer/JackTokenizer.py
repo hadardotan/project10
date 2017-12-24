@@ -157,6 +157,9 @@ class JackTokenizer(object):
         new_tokenized = []
         for part in tokenized_lines:
             if not re.match(RE_STRING_COMPILED,part.strip()):
+
+                part = part.replace("\n","")
+                part = part.replace("\t","")
                 part = re.split(SYMBOLS_RE, part)
                 new_tokenized+= part
             else:

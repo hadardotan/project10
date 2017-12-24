@@ -45,11 +45,11 @@ keywords = [K_CLASS ,K_CONSTRUCTOR ,K_FUNCTION ,K_METHOD ,K_FIELD ,K_STATIC
 ,K_RETURN , K_TRUE ,K_FALSE ,K_NULL ,K_THIS ,K_NONE ]
 
 # SYMBOL tokens
-symbols = ['{' , '}' , '(' , ')' , '[' , ']' , '. ' , ', ' , '; ' , '+' , '-' ,
-          '*' , '/' , '&' , ',' , '<' , '>' , '=' , '~']
+symbols = ['{' , '}' , '(' , ')' , '[' , ']' , '. ' , ',' , ';' , '+' , '-' ,
+          '*' , '/' , '&' , '<' , '>' , '=' , '~',"; ",", "]
 
 STRING_RE = r'(\\"[\w\W]*\\" )'
-SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\, |\\; |\\+|\\-|\\' \
+SYMBOLS_RE = '(\\{|\\}|\\(|\\)|\\[|\\]|\\, |\\;|\\+|\\-|\\' \
              '*|\\/|\\&|\\,|\\<|\\>|\\=|\\~|\\.)'
 QUOTATION_MARK = "\""
 
@@ -67,7 +67,7 @@ tokens_types = ['keyword', 'symbol', 'identifier', 'integerConstant', 'stringCon
 RE_INT = r'\d+'
 RE_STR = r'"[\w\W]*"'
 RE_ID = r'[a-zA-Z]+[\w]*'
-RE_NEWLINE = r'\\n'
+RE_NEWLINE = r'/\n'
 RE_WHITESPACES = r'\s' #two or more!
 RE_COMMENT1 = r'//.*[\r\n]+'
 RE_COMMENT2 = r'/\*[\s\S]*?\*/'
